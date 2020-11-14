@@ -2,14 +2,82 @@
 /// description: TODO
 /// @author Jesse Burdick-Pless jb4411
 
+#include <string.h>
 #include <stdio.h>
 #include <time.h>
 #include <getopt.h>
 #include <assert.h>
 #include <stdlib.h>
 
-int *quicksort( size_t size, const int *data ) {
+int **partition( int pivot, size_t size, const int *data ) {
+	int less_size = 0, same_size = 0, more_size = 0;
+	int *less = malloc(sizeof(int) * size);
+	int *same = malloc(sizeof(int) * size);
+	int *more = malloc(sizeof(int) * size);
 
+	size_t i = 0;
+	int num = 0;
+	while( i < size ) {
+		num = data[size];
+		if( num < pivot ) {
+			less[less_size] = num;
+			less_size++;
+		} else if( num > pivot ) {
+			more[more_size] = num;
+			more_size++;
+		} else {
+			same[same_size] = num;
+                        same_size++;
+		}
+	}
+	int **parts = malloc(sizeof(int *) * 4);
+	parts[0] = less;
+	parts[1] = same;
+	parts[2] = more;
+	int sizes[3] = {less_size, same_size, more_size};
+	parts[3] = sizes;
+
+	return parts;
+}
+
+int *quicksort( size_t size, const int *data ) {
+	if( size == 0 ) {
+		return NULL;
+	} else {
+		int pivot = data[0];
+		int **parts = partition(pivot, size, data);
+		int less_size = parts[3][0];
+		int same_size = parts[3][1];
+		int more_size = parts[3][2];
+		// sort less
+		int *less = parts[0];
+		less = quicksort(less_size, less);
+		
+		int *same = parts[1];
+		
+		// sort more
+		int *more = parts[2];
+		more = quicksort(more_size, more);
+		
+		// combine less + same + more into result
+		int *result = malloc(sizeof(int) * size);
+		assert(result != NULL);
+		memcpy(result, less, sizeof(int) * less_size);
+		memcpy(result + less_size, same, sizeof(int) * same_size);
+		memcpy(result + less_size + same_size, more, sizeof(int) * more_size);
+		
+		// free memory that is no longer needed
+		for( int i = 0; i < 3; ++i ) {
+			if( parts[i] ) {
+				free(parts[i]);
+			}
+		}
+		free(less);
+		free(same);
+		free(more);
+
+		return result;
+	}	
 }
 
 void *quicksort_threaded( void *args ) {
