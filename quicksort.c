@@ -52,20 +52,21 @@ int main( int argc, char **argv ) {
 	// read integer file
 	size_t size = 0;
 	size_t capacity = 10;
-	int num = 0;
 	int *data = malloc(sizeof(int) * 10);
 	assert(data != NULL);
-	while( fread(&num, sizeof(int), 1, fp) ) {
+	while( fscanf(fp, "%d", &data[size]) != EOF ) {
 		// print the unsorted values if -p
 		if( print ) {
-			printf("%d, ", num);
+			printf("%d, ", data[size]);
 		}
-		data[size] = num;
 		size++;
 		if( size == capacity ) {
 			data = realloc(data, capacity * 2);
 			assert(data != NULL);
 			capacity *= 2;			
+		}
+		if(size > 10) {
+			break;
 		}
 	}
 	if( print ) {
@@ -80,7 +81,7 @@ int main( int argc, char **argv ) {
 	start = clock();
 	sorted = quicksort( size, data );
 	end = clock();
-	double total_time = (double) (end - start) / CLOCKS_PER_SECOND;
+	double total_time = (double) (end - start) / CLOCKS_PER_SEC;
 	printf("Non-threaded time: %f\n", total_time);
 
 	// print the sorted values if -p
