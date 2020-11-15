@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <errno.h>
+
 
 /// num_spawned is a variable manipulated by multiple threads.
 static int num_spawned = 0;
@@ -103,55 +105,106 @@ int *quicksort( size_t size, const int *data ) {
 }
 
 void *quicksort_threaded( void *args ) {
-	// args layout:  args[0] = size, args[1] = *data
-	if( size == 0 ) {
-                return NULL;
+	int *data = (int *) args;
+	if( data[0] == 0) {
+                pthread_exit(NULL);
         } else {
-		size_t size = (size_t) args[0];
-		int *data = args[1]; //TODO
-                int pivot = (int) data[0]; // TODO
-		int **parts = partition(pivot, size, data);
+		pthread_t threads[2];
+		int rc = 0;
+		
+		int size = data[0];
+		data = &data[1];
+                int pivot = data[0]; 
+		int **parts = partition(pivot, (size_t) size, data);
                 int less_size = parts[3][0];
                 int same_size = parts[3][1];
                 int more_size = parts[3][2];
-                // sort less
-                int *old_less = parts[0];
-                int *less = quicksort(less_size, old_less);
-                if( old_less != NULL ) {
-                        free(old_less);
+                
+		// sort less
+		int *old_less = parts[0];
+		int *less_args = calloc(less_size + 1, sizeof(int));
+		less_args[0] = less_size;
+		memcpy(less_args + 1, old_less, sizeof(int) * less_size);
+		rc = pthread_create( &threads[0], NULL, quicksort_threaded, (void *) less_args );
+		if( rc ) {
+			printf( "ERROR; pthread_create() returned %d\n", rc );
+			exit( EXIT_FAILURE );
+		}
+
+		int *same = parts[1];
+
+		// sort more
+		int *old_more = parts[2];
+                int *more_args = calloc(more_size + 1, sizeof(int));
+                more_args[0] = more_size;
+                memcpy(more_args + 1, old_more, sizeof(int) * more_size);
+                rc = pthread_create( &threads[1], NULL, quicksort_threaded, (void *) more_args );
+                if( rc ) {
+                        printf( "ERROR; pthread_create() returned %d\n", rc );
+                        exit( EXIT_FAILURE );
                 }
 
-                int *same = parts[1];
+		// join less and more threads
+		void *retval = NULL;
+		pthread_join(threads[0], &retval); 
+		int *less_rt = (int *) retval;
+		int *less = &less_rt[1];
+		pthread_join(threads[1], &retval);
+		int *more_rt = (int *) retval;
+		int *more = &more_rt[1];
 
-                // sort more
-                int *old_more = parts[2];
-                int *more = quicksort(more_size, old_more);
-                if( old_more != NULL ) {
-                        free(old_more);
+		// update num_spawned
+                int lock = pthread_mutex_lock(&sharedLock);
+                if( lock ) {
+                        perror( "locking to update num_spawned" );
+                        exit( errno );
+                }
+                // +1 for the thread for less, +1 for the thread for more
+                num_spawned += 2;
+                lock = pthread_mutex_unlock(&sharedLock);
+                if( lock ) {
+                        perror( "unlocking after updating num_spawned" );
+                        exit( errno );
                 }
 
-                // combine less + same + more into result
-                int *result = calloc(size, sizeof(int));
-                assert(result != NULL);
-                if( less != NULL ) {
-                        memcpy(result, less, sizeof(int) * less_size);
-                }
-                if( same != NULL ) {
-                        memcpy(result + less_size, same, sizeof(int) * same_size);
-                }
-                if( more != NULL ) {
-                        memcpy(result + less_size + same_size, more, sizeof(int) * more_size);
-                }
+		// free old_less and old_more
+		if( old_less != NULL ) {
+			free(old_less);
+		}
+		if( old_more != NULL ) {
+			free(old_more);
+		}
+		// free less_args and more_args
+		free(less_args);
+		free(more_args);
 
-                // free memory that is no longer needed
-                free(less);
-                free(same);
-                free(more);
-                free(parts[3]);
-                free(parts);
 
-                return result;
-        }
+		// combine less + same + more into result
+		int *result = calloc(size + 1, sizeof(int));
+		assert(result != NULL);
+		result[0] = size;
+		if( less != NULL ) {
+			memcpy(result + 1, less, sizeof(int) * less_size);
+		}
+		if( same != NULL ) {
+			memcpy(result + 1 + less_size, same, sizeof(int) * same_size);
+		}
+		if( more != NULL ) {
+			memcpy(result + 1 + less_size + same_size, more, sizeof(int) * more_size);
+		}
+
+		// free memory that is no longer needed
+		less = NULL;
+		more = NULL;
+		data = NULL;
+		free(less_rt);
+		free(same);
+		free(more_rt);
+		free(parts[3]);
+		free(parts);
+
+		pthread_exit((void *) result);
+	}
 }
 
 int main( int argc, char **argv ) {
@@ -232,10 +285,7 @@ int main( int argc, char **argv ) {
 		printf("\n");
 	}
 	free(sorted);
-
-
-	free(data);
-	return 0;
+	sorted = NULL;
 
 	// print the unsorted values if -p
 	if( print ) {
@@ -249,22 +299,45 @@ int main( int argc, char **argv ) {
 	}
 
 	// sort (threaded) and print the timing
+	int rc = pthread_mutex_init( &sharedLock, NULL );
+	if( rc ) {
+		printf( "ERROR; pthread_mutex_init() returned %d\n", rc );
+		exit( EXIT_FAILURE );
+	}
+	pthread_t thread;
+	int *args = malloc(sizeof(int) * (size + 1));
+	args[0] = (int) size;
+	memcpy(args + 1, data, sizeof(int) * size);	
 
+	void *retval;
+	start = clock();
+	rc = pthread_create( &thread, NULL, quicksort_threaded, (void *) args );
+	if( rc ) {
+		printf( "ERROR; pthread_create() returned %d\n", rc );
+		exit( EXIT_FAILURE );
+	}
+	pthread_join(thread, &retval);	
+	end = clock();
+	total_time = (double) (end - start) / CLOCKS_PER_SEC;
+	printf("Threaded time: %f\n", total_time);
+	printf("Threads spawned: %d\n", num_spawned);
+	pthread_mutex_destroy(&sharedLock);
+
+	// print the sorted values if -p
+	if( print ) {
+		int *tsorted = (int *) retval;
+		tsorted = &tsorted[1];
+		printf("Resulting list: ");
+		size_t i = 0;
+		while( i < size ) {
+			printf("%d, ", tsorted[i]);
+			i++;
+		}
+		printf("\n");
+	}
+	free(args);
+	free(retval);
+
+	free(data);
+	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
