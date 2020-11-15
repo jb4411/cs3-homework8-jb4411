@@ -11,14 +11,17 @@
 
 int **partition( int pivot, size_t size, const int *data ) {
 	int less_size = 0, same_size = 0, more_size = 0;
-	int *less = malloc(sizeof(int) * size);
-	int *same = malloc(sizeof(int) * size);
-	int *more = malloc(sizeof(int) * size);
+	int *less = calloc(size, sizeof(int));
+	assert(less != NULL);
+	int *same = calloc(size, sizeof(int));
+	assert(same != NULL);
+	int *more = calloc(size, sizeof(int));
+	assert(more != NULL);
 
 	size_t i = 0;
 	int num = 0;
 	while( i < size ) {
-		num = data[size];
+		num = data[i];
 		if( num < pivot ) {
 			less[less_size] = num;
 			less_size++;
@@ -27,16 +30,19 @@ int **partition( int pivot, size_t size, const int *data ) {
 			more_size++;
 		} else {
 			same[same_size] = num;
-                        same_size++;
+			same_size++;
 		}
+		i++;
 	}
-	int **parts = malloc(sizeof(int *) * 4);
+	int **parts = calloc(4, sizeof(int *));
+	assert(parts != NULL);
 	parts[0] = less;
 	parts[1] = same;
 	parts[2] = more;
-	int sizes[3] = {less_size, same_size, more_size};
-	parts[3] = sizes;
-
+	parts[3] = calloc(3, sizeof(int));
+	parts[3][0] = less_size;
+	parts[3][1] = same_size;
+	parts[3][2] = more_size;
 	return parts;
 }
 
@@ -50,31 +56,40 @@ int *quicksort( size_t size, const int *data ) {
 		int same_size = parts[3][1];
 		int more_size = parts[3][2];
 		// sort less
-		int *less = parts[0];
-		less = quicksort(less_size, less);
-		
-		int *same = parts[1];
-		
-		// sort more
-		int *more = parts[2];
-		more = quicksort(more_size, more);
-		
-		// combine less + same + more into result
-		int *result = malloc(sizeof(int) * size);
-		assert(result != NULL);
-		memcpy(result, less, sizeof(int) * less_size);
-		memcpy(result + less_size, same, sizeof(int) * same_size);
-		memcpy(result + less_size + same_size, more, sizeof(int) * more_size);
-		
-		// free memory that is no longer needed
-		for( int i = 0; i < 3; ++i ) {
-			if( parts[i] ) {
-				free(parts[i]);
-			}
+		int *old_less = parts[0];
+		int *less = quicksort(less_size, old_less);
+		if( old_less != NULL ) {
+			free(old_less);
 		}
+
+		int *same = parts[1];
+
+		// sort more
+		int *old_more = parts[2];
+		int *more = quicksort(more_size, old_more);
+		if( old_more != NULL ) {
+			free(old_more);
+		}
+
+		// combine less + same + more into result
+		int *result = calloc(size, sizeof(int));
+		assert(result != NULL);
+		if( less != NULL ) {
+			memcpy(result, less, sizeof(int) * less_size);
+		}
+		if( same != NULL ) {
+			memcpy(result + less_size, same, sizeof(int) * same_size);
+		}
+		if( more != NULL ) {
+			memcpy(result + less_size + same_size, more, sizeof(int) * more_size);
+		}
+
+		// free memory that is no longer needed
 		free(less);
 		free(same);
 		free(more);
+		free(parts[3]);
+		free(parts);
 
 		return result;
 	}	
@@ -88,7 +103,7 @@ int main( int argc, char **argv ) {
 	int opt;
 	int print = 0;
 	while ( (opt = getopt( argc, argv, "p") ) != -1 ) {
-                switch( opt ) {
+		switch( opt ) {
 			case 'p':
 				print = 1;
 				break;
@@ -110,9 +125,9 @@ int main( int argc, char **argv ) {
 	fp = fopen(argv[1 + print], "r");
 	if( fp == NULL ) {
 		fprintf( stderr, "error: could not open integer file\n" );
-                exit( EXIT_FAILURE );
+		exit( EXIT_FAILURE );
 	}
-	
+
 	if( print ) {
 		printf("Unsorted list before non-threaded quicksort: ");
 	}
@@ -122,27 +137,26 @@ int main( int argc, char **argv ) {
 	size_t capacity = 10;
 	int *data = malloc(sizeof(int) * 10);
 	assert(data != NULL);
-	while( fscanf(fp, "%d", &data[size]) != EOF ) {
+	int num = 0;
+	while( fscanf(fp, "%d", &num) != EOF ) {
+		data[size] = num;
 		// print the unsorted values if -p
 		if( print ) {
 			printf("%d, ", data[size]);
 		}
 		size++;
 		if( size == capacity ) {
-			data = realloc(data, capacity * 2);
+			capacity *= 2;
+			data = realloc(data, capacity * sizeof(int));
 			assert(data != NULL);
-			capacity *= 2;			
-		}
-		if(size > 10) {
-			break;
 		}
 	}
 	if( print ) {
-                printf("\n");
+		printf("\n");
 	}
 	fclose(fp);
 	fp = NULL;
-	
+
 	// sort (non-threaded) and print timing
 	int *sorted;
 	clock_t start, end;
@@ -158,22 +172,29 @@ int main( int argc, char **argv ) {
 		size_t i = 0;	
 		while( i < size ) {
 			printf("%d, ", sorted[i]);
+			i++;
 		}
 		printf("\n");
 	}
-	
+	free(sorted);
+
+
+	free(data);
+	return 0;
+
 	// print the unsorted values if -p
 	if( print ) {
-                printf("Unsorted list before threaded quicksort: ");
+		printf("Unsorted list before threaded quicksort: ");
 		size_t i = 0;
-                while( i < size ) {
-                        printf("%d, ", data[i]);
-                }
+		while( i < size ) {
+			printf("%d, ", data[i]);
+			i++;
+		}
 		printf("\n");
 	}
 
 	// sort (threaded) and print the timing
-	
+
 }
 
 
