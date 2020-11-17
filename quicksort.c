@@ -1,5 +1,10 @@
 /// file: file_quicksort.c
-/// description: TODO
+/// description: A program that take an input file containign integers to be 
+/// sorted, sorts them with a non-threaded quicksort implementation, prints
+/// the time it took to sort them, then sorts the same integers with a threaded
+/// implementation of quicksort, prints the time it took to sort them, and 
+/// finallly prints the number of threads spawned. If -p is given as a command 
+/// line argument, the unsorted and sorted integers are also printed.
 /// @author Jesse Burdick-Pless jb4411
 
 #include <string.h>
@@ -13,10 +18,32 @@
 
 
 /// num_spawned is a variable manipulated by multiple threads.
-static int num_spawned = 0;
+
+static int num_spawned = 1;
 
 /// sharedLock protects the variable from concurrent access.
+
 static pthread_mutex_t sharedLock;
+
+/// This function takes an array of integers, the saize of said array, and a
+/// pivot value. The array is the split into three arrays, all values that are 
+/// lower than the pivot value are put in an array called less, all values that 
+/// are higher than the pivot value are put in an array called more, and all 
+/// values that are equal to the pivot value are put in an array called same.
+/// The resulting three arrays, as well as the sizes of hte arrays are then 
+/// returned.
+///
+/// @param pivot - the pivot value integers in data are compared to
+/// @param size  - the number of integers in the data array
+/// @param data  - the array of integers to be split into three new arrays
+/// @return      - an array of arrays with the following layout: 
+/// 		   parts[0] is the less array
+///		   parts[1] is the same array
+/// 		   parts[2] is the more array
+///		   parts[3] is an array of the sizes of the three arrays
+///		   parts[3][0] is the size of the less array
+///                parts[3][1] is the size of the same array
+///                parts[3][2] is the size of the more array
 
 int **partition( int pivot, size_t size, const int *data ) {
 	int less_size = 0, same_size = 0, more_size = 0;
@@ -54,6 +81,20 @@ int **partition( int pivot, size_t size, const int *data ) {
 	parts[3][2] = more_size;
 	return parts;
 }
+
+/// This function is a non-threaded implementation of the quicksort algorithm.
+/// This function takes an array of integers and the size of the array. The 
+/// first integer in the array is choosen as the pivot value and the array of 
+/// integers is then split into three arrays by the partition function, the 
+/// array less contains numbers lower than the pivot value, the array same 
+/// contains numbers equal to the pivot value, the array more contains numbers 
+/// higher than the pivot value. quicksort is then recursively called with the 
+/// less array and then the more array. Finally the less array, the same array, 
+/// and the more array are combinded and returned.
+///
+/// @param size - the number of integers in the data array
+/// @param data - the array to be sorted
+/// @return     - a pointer to the array of sorted integers
 
 int *quicksort( size_t size, const int *data ) {
 	if( size == 0 ) {
@@ -103,6 +144,24 @@ int *quicksort( size_t size, const int *data ) {
 		return result;
 	}	
 }
+
+/// This function is a threaded implementation of the quicksort algorithm. 
+/// This function takes a void * array containing an array of integers to be 
+/// sorted and the size of the array. The first integer in args is the size of 
+/// the array of integers to be sorted, the second integer in args is the first 
+/// integer in the array of integers to be sorted and is choosen to be the pivot 
+/// value. The array of integers is then split into three arrays by the 
+/// partition function. The array less contains numbers lower than the pivot 
+/// value, the array same contains numbers equal to the pivot value, the array 
+/// more contains numbers higher than the pivot value. quicksort_threaded is 
+/// then recursively called with the less array and the more array.
+/// Finally the less array, the same array, and the more array are combinded and
+/// returned.
+///
+/// @param args - a pointer to an array with the first value beong its size, and
+///               remaining values being the array of integers to be sorted
+/// @return     - a pointer to an array with the first value beong its size, and 
+/// 		  remaining values being the sorted array of integers
 
 void *quicksort_threaded( void *args ) {
 	int *data = (int *) args;
@@ -206,6 +265,22 @@ void *quicksort_threaded( void *args ) {
 		pthread_exit((void *) result);
 	}
 }
+
+/// The main function takes command line input, and processes argument flags.
+/// This function takes an input file containign integers to be sorted, sorts 
+/// them with a non-threaded quicksort implementation, prints the time it took 
+/// to sort them, then sorts the same integers with a threaded implementation of 
+/// quicksort, prints the time it took to sort them, and finallly prints the 
+/// number of threads spawned. If it is given -p as an argument it will print 
+/// the unsorted array and then print the sorted array for both the threaded 
+/// and non-threaded quicksort implementations.
+///
+/// @param argc integer value for the number of command line input
+///        values
+/// @param argv array of C string values, the command line arguments
+/// @return 0 to tell the OS that the process ran successfully, OR
+///         return 1 to tell the OS there were not enough command line
+///         input values or the command line arguments were invalid.
 
 int main( int argc, char **argv ) {
 	int opt;
