@@ -1,5 +1,5 @@
 /// file: file_quicksort.c
-/// description: A program that take an input file containign integers to be 
+/// description: A program that takes an input file containing integers to be 
 /// sorted, sorts them with a non-threaded quicksort implementation, prints
 /// the time it took to sort them, then sorts the same integers with a threaded
 /// implementation of quicksort, prints the time it took to sort them, and 
@@ -25,12 +25,12 @@ static int num_spawned = 1;
 
 static pthread_mutex_t sharedLock;
 
-/// This function takes an array of integers, the saize of said array, and a
-/// pivot value. The array is the split into three arrays, all values that are 
+/// This function takes an array of integers, the size of said array, and a
+/// pivot value. The array is then split into three arrays, all values that are
 /// lower than the pivot value are put in an array called less, all values that 
 /// are higher than the pivot value are put in an array called more, and all 
 /// values that are equal to the pivot value are put in an array called same.
-/// The resulting three arrays, as well as the sizes of hte arrays are then 
+/// The resulting three arrays, as well as the sizes of the arrays are then 
 /// returned.
 ///
 /// @param pivot - the pivot value integers in data are compared to
@@ -85,12 +85,12 @@ int **partition( int pivot, size_t size, const int *data ) {
 /// This function is a non-threaded implementation of the quicksort algorithm.
 /// This function takes an array of integers and the size of the array. The 
 /// first integer in the array is choosen as the pivot value and the array of 
-/// integers is then split into three arrays by the partition function, the 
+/// integers is then split into three arrays by the partition function. The 
 /// array less contains numbers lower than the pivot value, the array same 
 /// contains numbers equal to the pivot value, the array more contains numbers 
 /// higher than the pivot value. quicksort is then recursively called with the 
 /// less array and then the more array. Finally the less array, the same array, 
-/// and the more array are combinded and returned.
+/// and the more array are combined and returned.
 ///
 /// @param size - the number of integers in the data array
 /// @param data - the array to be sorted
@@ -148,20 +148,20 @@ int *quicksort( size_t size, const int *data ) {
 /// This function is a threaded implementation of the quicksort algorithm. 
 /// This function takes a void * array containing an array of integers to be 
 /// sorted and the size of the array. The first integer in args is the size of 
-/// the array of integers to be sorted, the second integer in args is the first 
+/// the array of integers to be sorted. The second integer in args is the first 
 /// integer in the array of integers to be sorted and is choosen to be the pivot 
 /// value. The array of integers is then split into three arrays by the 
 /// partition function. The array less contains numbers lower than the pivot 
 /// value, the array same contains numbers equal to the pivot value, the array 
 /// more contains numbers higher than the pivot value. quicksort_threaded is 
 /// then recursively called with the less array and the more array.
-/// Finally the less array, the same array, and the more array are combinded and
+/// Finally the less array, the same array, and the more array are combined and
 /// returned.
 ///
-/// @param args - a pointer to an array with the first value beong its size, and
-///               remaining values being the array of integers to be sorted
-/// @return     - a pointer to an array with the first value beong its size, and 
-/// 		  remaining values being the sorted array of integers
+/// @param args - a pointer to an array with the first value being its size, and
+///               the remaining values being the array of integers to be sorted
+/// @return     - a pointer to an array with the first value being its size, and 
+/// 		  the remaining values being the sorted array of integers
 
 void *quicksort_threaded( void *args ) {
 	int *data = (int *) args;
@@ -282,11 +282,11 @@ void *quicksort_threaded( void *args ) {
 }
 
 /// The main function takes command line input, and processes argument flags.
-/// This function takes an input file containign integers to be sorted, sorts 
+/// This function takes an input file containing integers to be sorted, sorts 
 /// them with a non-threaded quicksort implementation, prints the time it took 
 /// to sort them, then sorts the same integers with a threaded implementation of 
 /// quicksort, prints the time it took to sort them, and finallly prints the 
-/// number of threads spawned. If it is given -p as an argument it will print 
+/// number of threads spawned. If it is given -p as an argument, it will print 
 /// the unsorted array and then print the sorted array for both the threaded 
 /// and non-threaded quicksort implementations.
 ///
@@ -314,7 +314,7 @@ int main( int argc, char **argv ) {
 		}
 	}
 	if( argc < 2 || (print && (argc < 3)) ) {
-		fprintf( stderr, "error: missing command line arguments.\n" );
+		fprintf( stderr, "Usage: ./quick_sort [-p] file_of_ints\n" );
 		exit( EXIT_FAILURE );
 	}
 
@@ -388,7 +388,7 @@ int main( int argc, char **argv ) {
 		printf("\n");
 	}
 
-	// sort (threaded) and print the timing
+	// sort (threaded) and print timing
 	int rc = pthread_mutex_init( &sharedLock, NULL );
 	if( rc ) {
 		errno = rc;
@@ -409,12 +409,12 @@ int main( int argc, char **argv ) {
 		exit( EXIT_FAILURE );
 	}
 	rc = pthread_join(thread, &retval);	
+	end = clock();
 	if( rc ) {
 		errno = rc;
 		perror( "pthread_join" );
 		exit( EXIT_FAILURE );
 	}
-	end = clock();
 	total_time = (double) (end - start) / CLOCKS_PER_SEC;
 	printf("Threaded time: %f\n", total_time);
 	printf("Threads spawned: %d\n", num_spawned);
