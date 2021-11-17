@@ -1,0 +1,65 @@
+commit f4629a497407933103260d4613604289ddd3de95
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Wed Nov 18 15:41:18 2020 -0500
+
+    Changes source file name from quicksort.c to quick_sort.c.
+
+commit cd9afe87f87b07a0db1befff74cc543c8e3d7ade
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Wed Nov 18 13:50:26 2020 -0500
+
+    Fixed documentation in quicksort.c.
+
+commit fd178e49313c95594960b07522b4438f7c2f9f33
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Wed Nov 18 13:19:26 2020 -0500
+
+    Fixed error staements and fixed a memory leak.
+
+commit ec339803ba37f502dd04e16452b551e08c249ab2
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Tue Nov 17 12:50:36 2020 -0500
+
+    Added documentation to quicksort.c.
+
+commit 11c0e5dacf450025bf32b83feb5386e052daaeec
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sun Nov 15 18:16:03 2020 -0500
+
+    Programmed threaded quicksort implementation.
+
+commit e736532e4d878234c337f461f88a6f5131bb545d
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sun Nov 15 15:38:55 2020 -0500
+
+    Began work on threaded quicksort implementation.
+
+commit 1159e4b7e174f2123f4f90c6fd7062908cfae936
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sun Nov 15 15:11:33 2020 -0500
+
+    Fixed memory errors in non-threaded quicksort implementation.
+
+commit 9bee6e5b73daa95e49c0004b157f5235fa301cc3
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sat Nov 14 15:44:14 2020 -0500
+
+    Added partition function to be used by quicksort function, began programming partition and quicksort functions.
+
+commit e822f854dd955e4f1b68833183acfb8d4c1840cb
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sat Nov 14 15:02:07 2020 -0500
+
+    Fixed file reading bug in main function, began work on non-threaded quicksort.
+
+commit 7be62a9d4ffdaa35382af09a7c7572f33eda8a85
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sat Nov 14 14:37:27 2020 -0500
+
+    Began work on main function.
+
+commit 20e69cd9c2a8d535187bfd753cf0a5148742be5a
+Author: Jesse  Burdick-Pless <jb4411@cs.rit.edu>
+Date:   Sat Nov 14 13:58:04 2020 -0500
+
+    Initial provisioning
